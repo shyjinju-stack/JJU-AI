@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>전주대-AI 이음 프로젝트 출석체크</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+/* ================= 설정은 아래 <script>의 CONFIG에서 ================= */
+:root{
+  --ink:#13294B; --blue:#1E5AA8; --blue-soft:#E7EEF8; --paper:#F4F7FB; --card:#FFFFFF;
+  --line:#D5DDE8; --muted:#5B6B82; --ok:#1F7A52; --ok-soft:#E3F3EB; --err:#B3261E; --err-soft:#FBEAE8;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#E6ECF5; --blue:#7FAEEA; --blue-soft:#1C2A40; --paper:#0F1726; --card:#172235;
+    --line:#2C3B53; --muted:#9AA9BF; --ok:#5CC796; --ok-soft:#15302A; --err:#F08A80; --err-soft:#3A1E1D;
+    color-scheme: dark;
+  }
+}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; word-break:keep-all;
+}
+.wrap{max-width:560px;margin:0 auto;padding:0 20px 48px}
+
+/* 헤더: 두 기관이 '이어지는' 모양을 한 번만 강조 */
+header{padding:36px 0 24px}
+.bridge{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--muted)}
+.bridge .line{flex:1;height:2px;background:linear-gradient(90deg,var(--line),var(--blue),var(--line));border-radius:2px}
+h1{font-size:30px;line-height:1.25;letter-spacing:-0.02em;margin:18px 0 6px;font-weight:800}
+.sub{margin:0;color:var(--muted);font-size:15px}
+
+/* 회차 선택 */
+.sessions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 0}
+.sessions button{
+  all:unset;cursor:pointer;text-align:left;padding:11px 10px 10px;border-radius:12px;min-width:0;
+  border:1.5px solid var(--line);background:var(--card);transition:border-color .15s,background .15s;
+}
+.sessions button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.sessions .d{display:block;font-size:17px;font-weight:800;letter-spacing:-0.02em;line-height:1.2}
+.sessions .t{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.sessions button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft)}
+.sessions button[aria-pressed="true"] .d{color:var(--blue)}
+
+.session-info{margin:14px 0 0;padding:14px 16px;border-left:3px solid var(--blue);background:var(--card);border-radius:0 10px 10px 0}
+.session-info strong{display:block;font-size:17px}
+.session-info span{color:var(--muted);font-size:14px}
+
+section{margin-top:28px}
+h2{font-size:19px;margin:0 0 12px;letter-spacing:-0.01em}
+
+/* 폼 */
+form{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+label.f{display:block;font-size:14px;font-weight:600;margin:0 0 6px}
+.field{margin-bottom:16px}
+input[type=text],input[type=tel],select{
+  width:100%;font:inherit;font-size:17px;color:var(--ink);background:var(--paper);
+  border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;appearance:none;
+}
+input:focus,select:focus{outline:none;border-color:var(--blue);background:var(--card)}
+.hint{font-size:13px;color:var(--muted);margin-top:4px}
+.consent{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:4px 0 18px}
+.consent table{width:100%;border-collapse:collapse;font-size:13.5px}
+.consent th,.consent td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.consent th{width:34%;font-weight:600;color:var(--muted);background:var(--paper)}
+.consent tr:last-child th,.consent tr:last-child td{border-bottom:0}
+.agree{display:flex;gap:10px;align-items:flex-start;padding:12px;background:var(--blue-soft);font-size:15px;font-weight:600;cursor:pointer}
+.agree input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--blue);flex:none}
+button.submit{
+  width:100%;font:inherit;font-size:17px;font-weight:700;color:#fff;background:var(--blue);
+  border:0;border-radius:12px;padding:15px;cursor:pointer;
+}
+@media (prefers-color-scheme: dark){button.submit{color:#0F1726}}
+button.submit:disabled{opacity:.45;cursor:not-allowed}
+button.submit:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.timebox{margin:0 0 12px;padding:12px 14px;border-radius:10px;font-size:15px;font-weight:600;background:var(--blue-soft);color:var(--blue)}
+.timebox.closed{background:var(--err-soft);color:var(--err)}
+.msg{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:15px;display:none}
+.msg.err{display:block;background:var(--err-soft);color:var(--err)}
+
+/* 완료 화면 */
+.done{display:none;background:var(--card);border:1.5px solid var(--ok);border-radius:16px;padding:24px 20px;text-align:center}
+.done .check{width:56px;height:56px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;margin:0 auto 10px;font-size:30px;font-weight:800}
+.done h3{margin:0 0 4px;font-size:21px}
+.done p{margin:0;color:var(--muted)}
+.done .stamp{margin-top:14px;font-size:14px;color:var(--ink);background:var(--paper);border-radius:10px;padding:10px}
+@media (prefers-reduced-motion:no-preference){.done.show .check{animation:pop .35s ease-out}}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.08)}100%{transform:scale(1)}}
+
+/* 강사 프로필 */
+.prof{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.prof-head{display:flex;gap:16px;align-items:center}
+.photo{width:84px;height:84px;border-radius:50%;flex:none;overflow:hidden;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:34px;font-weight:800}
+.photo img{width:100%;height:100%;object-fit:cover}
+.prof-name{font-size:22px;font-weight:800;margin:0}
+.prof-role{margin:2px 0 0;color:var(--muted);font-size:14.5px}
+.prof ul{margin:16px 0 0;padding:0;list-style:none}
+.prof li{padding:10px 0;border-top:1px solid var(--line);font-size:15px}
+.prof li b{display:block;font-size:13px;color:var(--blue);font-weight:700}
+.quote{margin:16px 0 0;padding:14px 16px;background:var(--paper);border-radius:10px;font-size:15px}
+
+/* 실습 내용 */
+.agenda{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.agenda .goal{padding:14px 16px;font-size:14.5px;color:var(--muted);border-bottom:1px solid var(--line)}
+.agenda ol{margin:0;padding:0;list-style:none;counter-reset:s}
+.agenda li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);counter-increment:s;align-items:start}
+.agenda li:last-child{border-bottom:0}
+.agenda li::before{content:counter(s);width:24px;height:24px;border-radius:50%;background:var(--blue-soft);color:var(--blue);font-weight:700;font-size:13px;display:grid;place-items:center}
+.agenda .n{font-weight:700;font-size:15px}
+.agenda .c{display:block;font-weight:400;font-size:13.5px;color:var(--muted)}
+.agenda .m{font-size:13px;color:var(--muted);white-space:nowrap}
+
+
+/* 연수 소개 */
+.intro{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.intro p.lead{margin:0 0 14px;font-size:15.5px}
+.intro h3{font-size:15px;margin:18px 0 8px;color:var(--blue)}
+.intro ul.goal-list{margin:0;padding:0;list-style:none}
+.intro ul.goal-list li{position:relative;padding:0 0 8px 16px;font-size:15px}
+.intro ul.goal-list li::before{content:"";position:absolute;left:2px;top:10px;width:6px;height:6px;border-radius:50%;background:var(--blue)}
+.intro dl{margin:0;display:grid;grid-template-columns:88px 1fr;border-top:1px solid var(--line)}
+.intro dt,.intro dd{margin:0;padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.intro dt{color:var(--muted);font-weight:600}
+.notice{margin-top:14px;padding:12px 14px;background:var(--blue-soft);border-radius:10px;font-size:14.5px}
+.jump{display:block;width:100%;border:0;font:inherit;font-weight:700;cursor:pointer;margin-top:12px;text-align:center;padding:13px;border-radius:12px;background:var(--blue);color:#fff;font-weight:700;text-decoration:none}
+@media (prefers-color-scheme: dark){.jump{color:#0F1726}}
+.jump:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+html{scroll-behavior:smooth}
+footer{margin-top:36px;font-size:13px;color:var(--muted);text-align:center}
+.demo{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:var(--err-soft);color:var(--err);font-size:13px;display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="bridge"><span>전주대학교</span><span class="line" aria-hidden="true"></span><span>JB전북은행</span></div>
+    <h1>전주대-AI 이음 프로젝트</h1>
+    <p class="sub">전주대 × JB, 일잘러 AI 콜라보<br>지역협력 기반 AI 실무역량 강화 실습 연수</p>
+  </header>
+
+  <div class="demo" id="demo"></div>
+
+  <div class="sessions" id="sessions" role="group" aria-label="연수 회차 선택"></div>
+  <div class="session-info" id="sessionInfo"></div>
+  <button type="button" class="jump" onclick="document.getElementById('h-att').scrollIntoView({behavior:'smooth'})">출석 체크하러 가기</button>
+
+
+
+  <section aria-labelledby="h-intro">
+    <h2 id="h-intro">연수 소개</h2>
+    <div class="intro">
+      <p class="lead">전주대학교의 지역 재직자 대상 무상교육과 연계해, 본부부서와 영업점 직원의 업무 특성에 맞춘 AI 실습 연수를 운영합니다. 연수가 끝나면 각자 업무에 바로 쓸 수 있는 결과물을 하나씩 갖고 돌아갑니다.</p>
+      <h3>추진 목적</h3>
+      <ul class="goal-list">
+        <li>지역 대학의 교육 역량과 지역 금융기관의 현장 수요를 잇는 산학협력형 인재육성</li>
+        <li>직무별 AI 활용 교육으로 데이터 분석·보고 역량과 반복 업무 효율 향상</li>
+        <li>개인별 결과물 제작과 현장 적용을 연계한 실전 중심 학습문화 확산</li>
+      </ul>
+      <h3>운영 개요</h3>
+      <dl>
+        <dt>협력기관</dt><dd>전주대학교 평생학습지원센터</dd>
+        <dt>교육대상</dt><dd>총 60명 내외 (본부부서 30명, 영업점 30명)</dd>
+        <dt>본부부서</dt><dd>나만의 대시보드 만들기<br>11.27(금), 12.4(금) 14:00~17:00 · 총 6시간</dd>
+        <dt>영업점</dt><dd>나만의 AI 업무비서 만들기<br>12.18(금) 14:00~17:00 · 3시간</dd>
+        <dt>장소</dt><dd>전주대학교 전산실습실</dd>
+        <dt>결과물</dt><dd>본부부서: 업무형 대시보드 및 분석 요약<br>영업점: 업무 지원용 AI 비서 및 활용 예시</dd>
+      </dl>
+      <div class="notice">교육 종료 시 개인별 결과물과 AI 활용 과제를 제출해 주세요.</div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-prof">
+    <h2 id="h-prof">강사 소개</h2>
+    <div class="prof">
+      <div class="prof-head">
+        <div class="photo" id="photo">송</div>
+        <div>
+          <p class="prof-name">송해근 교수</p>
+          <p class="prof-role">전주대학교 기술경영공학과<br>RISE사업단 평생학습지원센터장</p>
+        </div>
+      </div>
+      <ul>
+        <li><b>지역 재직자 AI 교육</b>교육부 ‘재직자 AI·디지털(AID) 집중과정’ 운영으로 전주대학교 AID 선도대학 선정(2026)</li>
+        <li><b>현장형 실습 과정</b>일반사무·영업·마케팅 직무별 ‘AID 30+ 집중캠프’ 9개 과정 운영</li>
+        <li><b>이번 연수</b>본부부서 ‘나만의 대시보드 만들기’, 영업점 ‘나만의 AI 업무비서 만들기’ 실습 진행</li>
+        <li><b>지역 협력</b>전주고용복지플러스센터 AI 인재양성 협약, 전주남부시장 평생학습 협약 등 지역 산업 연계 교육 추진</li>
+      </ul>
+      <p class="quote">“성인학습자 중심의 AI 교육으로 산업 현장에 바로 쓰이는 역량을 만드는 데 집중합니다.”</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-agenda">
+    <h2 id="h-agenda">오늘의 실습</h2>
+    <div class="agenda">
+      <div class="goal" id="goal"></div>
+      <ol id="agenda"></ol>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-att">
+    <h2 id="h-att">출석 체크</h2>
+
+    <div class="timebox" id="timebox" role="status" aria-live="polite"></div>
+    <form id="form" novalidate>
+      <div class="field">
+        <label class="f" for="empNo">행번</label>
+        <input type="tel" id="empNo" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="숫자만 입력">
+      </div>
+      <div class="field">
+        <label class="f" for="dept">소속부서</label>
+        <input type="text" id="dept" autocomplete="organization" placeholder="예) 인사지원부, 전주금융센터">
+      </div>
+      <div class="field">
+        <label class="f" for="name">성명</label>
+        <input type="text" id="name" autocomplete="name" placeholder="홍길동">
+      </div>
+
+      <label class="f">개인정보 수집·이용 동의</label>
+      <div class="consent">
+        <table>
+          <tr><th>수집 목적</th><td id="cPurpose"></td></tr>
+          <tr><th>수집 항목</th><td>행번, 소속부서, 성명, 출석 시점의 위치<br><span style="font-size:12.5px;opacity:.8">위치는 연수장 안에 있는지 확인하는 데만 쓰며, 좌표는 저장하지 않고 연수장과의 거리만 기록합니다</span></td></tr>
+          <tr><th>보유 기간</th><td id="cRetention"></td></tr>
+          <tr><th>동의 거부</th><td>동의를 거부할 수 있으며, 이 경우 전자출석 대신 현장 담당자에게 서면으로 출석 확인을 받으시면 됩니다.</td></tr>
+        </table>
+        <label class="agree"><input type="checkbox" id="agree"> 위 내용을 확인했으며 개인정보 수집·이용에 동의합니다.</label>
+      </div>
+
+      <button class="submit" type="submit" id="submitBtn" disabled>출석하기</button>
+      <div class="msg" id="msg" role="alert"></div>
+    </form>
+
+    <div class="done" id="done" role="status" aria-live="polite">
+      <div class="check" aria-hidden="true">✓</div>
+      <h3 id="doneTitle">출석했습니다</h3>
+      <p id="doneSub"></p>
+      <div class="stamp" id="doneStamp"></div>
+    </div>
+  </section>
+
+  <footer>JB전북은행 인사지원부 인재개발팀 · 전주대학교 평생학습지원센터<br>장소 : 전주대학교 전산실습실</footer>
+</div>
+
+<script>
+/* ===================== 설정 ===================== */
+const CONFIG = {
+  // 교수님 사진: 이미지 파일 경로 또는 data: URI. 비어 있으면 '송' 이니셜 표시
+  PHOTO: "data:image/jpeg;base64,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",
+  PURPOSE: "연수 출석 확인 및 이수 관리",
+  RETENTION: "연수 종료 후 1년 (이후 지체 없이 파기)",
+  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxmb9g24oxXLP0Fttg79gyOLtpsGQ2MMHGf0sg-lpoW51oXPPGyOoBSL0VlhBeGhJIaVQ/exec", // 출석 저장용 Apps Script 주소
+  PLACE_LAT: 35.8131, PLACE_LNG: 127.0896   // 연수장(전주대) 좌표 - 거리 표시용 (판정은 서버에서)
+};
+
+const DASH = {
+  course:"본부부서 과정", title:"나만의 대시보드 만들기",
+  goal:"GPT로 데이터를 정리·분석하고, 핵심 지표를 시각화한 대시보드를 만들어 보고·의사결정 지원 역량을 키웁니다.",
+  items:[
+    ["데이터 이해","분석 목적 설정, 데이터 구조 확인, 누락·중복 점검","1시간"],
+    ["분석 및 해석","지표 산출, 기간별·항목별 비교, 변화 및 시사점 도출","2시간"],
+    ["대시보드 제작","차트 선택, 핵심 지표 구성, 대시보드 제작 실습","2시간"],
+    ["결과 공유","분석 검증, 보고 문구 작성, 업무 활용방안 공유","1시간"]
+  ]
+};
+const SESSIONS = [
+  {id:"s1", date:"2026-11-27", label:"11.27(금)", tag:"본부 1일차", time:"14:00~17:00", ...DASH, day:"1일차 (총 2일 · 6시간)"},
+  {id:"s2", date:"2026-12-04", label:"12.4(금)",  tag:"본부 2일차", time:"14:00~17:00", ...DASH, day:"2일차 (총 2일 · 6시간)"},
+  {id:"s3", date:"2026-12-18", label:"12.18(금)", tag:"영업점",     time:"14:00~17:00",
+   course:"영업점 과정", title:"나만의 AI 업무비서 만들기", day:"1일 · 3시간",
+   goal:"반복 업무와 정보 정리를 돕는 AI 비서를 직접 구성하고, 상황별 답변을 검증·개선해 현장 활용 역량을 키웁니다.",
+   items:[
+     ["업무 발굴","반복 업무 파악, AI 활용 과제 및 비서 역할 선정","30분"],
+     ["AI 업무 비서 이해","업무 보고·회의 후속조치 사례, 자료 활용 원칙 이해","30분"],
+     ["업무비서 제작","업무 목적에 맞는 비서 구성 및 상황별 활용 실습","90분"],
+     ["검증 및 공유","정확성 확인, 오류 수정, 실무 적용계획 공유","30분"]
+   ]}
+];
+/* ================================================= */
+
+const $ = id => document.getElementById(id);
+let current;
+
+let SERVER = { testMode:false, open:"13:40", close:"17:00", radius:600, offset:0, ready:false };
+
+function pickInitial(p){
+  const byParam = SESSIONS.find(s => s.id === p);
+  if (byParam) return byParam;
+  const t = kstNow().toISOString().slice(0,10);
+  return SESSIONS.find(s => s.date === t) || SESSIONS.find(s => s.date > t) || SESSIONS[SESSIONS.length-1];
+}
+function kstNow(){ return new Date(Date.now() + SERVER.offset + 9*3600*1000); } // 서버 기준 한국시간
+function windowState(sess){
+  if (SERVER.testMode) return "open";
+  const n = kstNow(), today = n.toISOString().slice(0,10), hm = n.toISOString().slice(11,16);
+  if (today < sess.date || (today === sess.date && hm < SERVER.open)) return "before";
+  if (today > sess.date || hm >= SERVER.close) return "after";
+  return "open";
+}
+function updateBtn(){
+  const tb = $("timebox");
+  if (!SERVER.ready){ tb.className = "timebox"; tb.textContent = "출석 정보를 불러오는 중…"; $("submitBtn").disabled = true; return; }
+  const st = windowState(current), label = `${current.label} ${SERVER.open}~${SERVER.close}`;
+  if (SERVER.testMode){ tb.className = "timebox closed"; tb.textContent = "테스트 모드: 시간·위치 제한 없이 출석됩니다 (테스트 기록은 나중에 지워 주세요)"; }
+  else if (st === "open"){ tb.className = "timebox"; tb.textContent = `지금 출석할 수 있습니다 (${label}) · 연수장 안에서만 가능`; }
+  else if (st === "before"){ tb.className = "timebox closed"; tb.textContent = `출석은 ${label}에 연수장에서 가능합니다.`; }
+  else { tb.className = "timebox closed"; tb.textContent = `출석 시간이 끝났습니다 (${label}). 현장 담당자에게 문의해 주세요.`; }
+  $("submitBtn").disabled = !($("agree").checked && st === "open");
+}
+
+function render(s){
+  current = s;
+  $("sessions").innerHTML = "";
+  SESSIONS.forEach(x => {
+    const b = document.createElement("button");
+    b.type = "button"; b.setAttribute("aria-pressed", x.id === s.id);
+    b.innerHTML = `<span class="d">${x.label}</span><span class="t">${x.tag}</span>`;
+    b.onclick = () => render(x);
+    $("sessions").appendChild(b);
+  });
+  $("sessionInfo").innerHTML = `<strong>${s.course} · ${s.title}</strong><span>${s.date.replaceAll("-",".")} ${s.time} · ${s.day}</span>`;
+  $("goal").textContent = s.goal;
+  $("agenda").innerHTML = s.items.map(i => `<li><span class="n">${i[0]}<span class="c">${i[1]}</span></span><span class="m">${i[2]}</span></li>`).join("");
+  updateBtn();
+}
+
+function setMsg(text){ const m = $("msg"); m.textContent = text; m.className = text ? "msg err" : "msg"; }
+
+async function loadServer(){
+  try{
+    const r = await fetch(CONFIG.SCRIPT_URL + "?action=config");
+    const c = await r.json();
+    SERVER = { testMode:!!c.testMode, open:c.open, close:c.close, radius:c.radius, offset:(c.now||Date.now()) - Date.now(), ready:true };
+    if (c.dates) SESSIONS.forEach(x => { if (c.dates[x.id]) x.date = c.dates[x.id]; });
+  }catch(e){
+    $("demo").textContent = "출석 서버에 연결하지 못했습니다. 잠시 후 새로고침해 주세요.";
+    $("demo").style.display = "block";
+  }
+  render(pickInitial(new URLSearchParams(location.search).get("s")));
+}
+
+function getPosition(){
+  return new Promise((ok, fail) => {
+    if (!navigator.geolocation) return fail(new Error("unsupported"));
+    navigator.geolocation.getCurrentPosition(p => ok(p.coords), fail, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+  });
+}
+
+function init(){
+  if (CONFIG.PHOTO) $("photo").innerHTML = `<img src="${CONFIG.PHOTO}" alt="송해근 교수 사진">`;
+  $("cPurpose").textContent = CONFIG.PURPOSE + ", 연수장 현장 출석 확인";
+  $("cRetention").textContent = CONFIG.RETENTION;
+  render(pickInitial(new URLSearchParams(location.search).get("s")));
+  loadServer();
+  try { const saved = JSON.parse(localStorage.getItem("jju-ai-me")||"null");
+    if (saved){ $("empNo").value = saved.empNo||""; $("dept").value = saved.dept||""; $("name").value = saved.name||""; } } catch(e){}
+  $("empNo").addEventListener("input", e => e.target.value = e.target.value.replace(/\D/g,""));
+  $("agree").addEventListener("change", updateBtn);
+  setInterval(() => current && updateBtn(), 20000);
+  $("form").addEventListener("submit", submit);
+}
+
+function resetBtn(){ const b = $("submitBtn"); b.disabled = false; b.textContent = "출석하기"; }
+
+async function submit(e){
+  e.preventDefault(); setMsg("");
+  const empNo = $("empNo").value.trim(), dept = $("dept").value.trim(), name = $("name").value.trim();
+  if (!/^\d{3,10}$/.test(empNo)) return setMsg("행번을 숫자로 입력해 주세요."), $("empNo").focus();
+  if (!dept) return setMsg("소속부서를 입력해 주세요."), $("dept").focus();
+  if (!/^[가-힣a-zA-Z\s]{2,20}$/.test(name)) return setMsg("성명을 정확히 입력해 주세요."), $("name").focus();
+  if (!$("agree").checked) return setMsg("개인정보 수집·이용에 동의해야 전자출석할 수 있습니다.");
+
+  const btn = $("submitBtn"); btn.disabled = true;
+  const payload = { session:current.id, course:current.course, title:current.title, date:current.date,
+                    empNo, dept, name, consent:"Y", consentText:CONFIG.PURPOSE+" / 위치(거리만 기록) / "+CONFIG.RETENTION, ua:navigator.userAgent };
+  if (!SERVER.testMode){
+    btn.textContent = "위치 확인 중…";
+    try{
+      const c = await getPosition();
+      payload.lat = c.latitude; payload.lng = c.longitude; payload.acc = Math.round(c.accuracy);
+    }catch(err){
+      resetBtn();
+      return setMsg("위치를 확인하지 못했습니다. 휴대폰의 위치(GPS)를 켜고, 위치 권한을 ‘허용’한 뒤 다시 눌러 주세요. 계속 안 되면 현장 담당자에게 알려 주세요.");
+    }
+  }
+  btn.textContent = "저장 중…";
+  try{
+    const r = await fetch(CONFIG.SCRIPT_URL, { method:"POST", body:JSON.stringify(payload) }); // text/plain → CORS 사전요청 없음
+    const res = await r.json();
+    if (!res.ok){ resetBtn(); return setMsg(res.error || "저장 실패"); }
+    try { localStorage.setItem("jju-ai-me", JSON.stringify({empNo,dept,name})); } catch(e){}
+    $("form").style.display = "none";
+    $("doneTitle").textContent = res.duplicate ? "이미 출석했습니다" : "출석했습니다";
+    $("doneSub").textContent = `${current.label} ${current.course} · ${current.title}`;
+    $("doneStamp").textContent = `${dept} ${name} (행번 ${empNo}) · ${res.time||""}`;
+    const d = $("done"); d.style.display = "block"; d.classList.add("show");
+  }catch(err){
+    resetBtn();
+    setMsg("출석이 저장되지 않았습니다. 네트워크를 확인한 뒤 다시 눌러 주세요. 계속 안 되면 현장 담당자에게 알려 주세요.");
+  }
+}
+init();
+</script>
+</body>
+</html>
