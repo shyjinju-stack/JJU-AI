@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>전주대-AI 이음 프로젝트 오시는 길</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{--ink:#13294B;--blue:#1E5AA8;--soft:#E7EEF8;--paper:#F4F7FB;--card:#FFF;--line:#D5DDE8;--muted:#5B6B82;--ok:#1F7A52;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--ink:#E6ECF5;--blue:#7FAEEA;--soft:#1C2A40;--paper:#0F1726;--card:#172235;--line:#2C3B53;--muted:#9AA9BF;--ok:#5CC796;color-scheme:dark}}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;line-height:1.6;word-break:keep-all;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:28px 20px 44px}
+.kick{font-size:14px;font-weight:600;color:var(--muted)}
+h1{font-size:28px;line-height:1.25;margin:8px 0 6px;letter-spacing:-.02em}
+.dest{margin:18px 0 0;padding:18px;border-radius:16px;background:var(--blue);color:#fff}
+@media (prefers-color-scheme:dark){.dest{color:#0F1726}}
+.dest .room{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.dest .addr{font-size:14px;opacity:.9;margin-top:4px}
+section{margin-top:22px}
+h2{font-size:18px;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.consent table{width:100%;border-collapse:collapse;font-size:13.5px;margin:4px 0 14px}
+.consent th,.consent td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+.consent th{width:30%;color:var(--muted);font-weight:600;background:var(--paper)}
+.consent tr:last-child th,.consent tr:last-child td{border-bottom:0}
+.consent .tbl{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.btn{display:block;width:100%;font:inherit;font-weight:700;font-size:16px;border:0;border-radius:12px;padding:14px;cursor:pointer;text-align:center;text-decoration:none}
+.btn.primary{background:var(--blue);color:#fff}
+@media (prefers-color-scheme:dark){.btn.primary{color:#0F1726}}
+.btn.ghost{background:transparent;color:var(--muted);font-weight:600;font-size:14px;padding:10px}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+#map{height:280px;border-radius:14px;border:1px solid var(--line);overflow:hidden;z-index:0}
+.stat{display:flex;gap:10px;margin:12px 0 0}
+.stat div{flex:1;background:var(--soft);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:12.5px;color:var(--muted)}
+.msg{font-size:14px;color:var(--muted);margin:10px 0 0}
+.apps{display:grid;gap:10px}
+.app{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:700}
+.app:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.app i{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-style:normal;font-size:14px;font-weight:800;flex:none}
+.app small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{position:relative;padding:0 0 12px 34px;counter-increment:s;font-size:15px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:24px;height:24px;border-radius:50%;background:var(--soft);color:var(--blue);font-weight:700;font-size:13px;display:grid;place-items:center}
+.note{font-size:13.5px;color:var(--muted);margin:4px 0 8px}
+.btn.call{background:var(--soft);color:var(--blue);margin-bottom:10px}
+footer{margin-top:30px;text-align:center;font-size:13px;color:var(--muted)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kick">「전주대-AI 이음 프로젝트」 연수장 오시는 길</div>
+  <h1>전주대학교 자유관 205호<br>찾아오기</h1>
+
+  <div class="dest">
+    <div class="room" id="room"></div>
+    <div class="addr" id="addr"></div>
+  </div>
+
+  <!-- 1. 위치정보 동의 -->
+  <section id="consentBox">
+    <h2>내 위치로 길안내 받기</h2>
+    <div class="card consent">
+      <div class="tbl"><table>
+        <tr><th>이용 목적</th><td>현재 위치에서 연수장까지 거리 표시 및 길안내</td></tr>
+        <tr><th>이용 항목</th><td>휴대폰의 현재 위치(위도·경도)</td></tr>
+        <tr><th>보관</th><td>저장하거나 은행·학교로 전송하지 않으며, 이 화면에서만 사용</td></tr>
+        <tr><th>거부 시</th><td>동의하지 않아도 아래 지도 앱 버튼으로 길안내를 받을 수 있습니다</td></tr>
+      </table></div>
+      <button class="btn primary" id="agreeBtn" type="button">동의하고 내 위치 확인하기</button>
+      <button class="btn ghost" id="skipBtn" type="button">동의하지 않고 지도만 보기</button>
+    </div>
+  </section>
+
+  <!-- 2. 지도 -->
+  <section>
+    <h2>지도</h2>
+    <div id="map" role="img" aria-label="전주대학교 위치 지도"></div>
+    <div class="stat" id="stat" hidden>
+      <div><b id="dist">-</b><span>직선거리</span></div>
+      <div><b id="eta">-</b><span>차량 예상(대략)</span></div>
+    </div>
+    <p class="msg" id="msg" role="status" aria-live="polite"></p>
+  </section>
+
+  <!-- 3. 내비 연결 -->
+  <section>
+    <h2>내비게이션 바로 연결</h2>
+    <div class="apps">
+      <a class="app" id="kakao"><i style="background:#FEE500;color:#191919">K</i><span>카카오맵으로 길찾기<small>앱이 있으면 앱으로 열립니다</small></span></a>
+      <a class="app" id="naver"><i style="background:#03C75A;color:#fff">N</i><span>네이버지도로 길찾기<small>앱이 없으면 네이버지도 웹으로 열립니다</small></span></a>
+      <a class="app" id="tmap"><i style="background:#E8173F;color:#fff">T</i><span>T맵으로 길찾기<small>T맵 앱이 있어야 합니다</small></span></a>
+    </div>
+  </section>
+
+  <!-- 4. 도착 후 -->
+  <section>
+    <h2>도착하면</h2>
+    <div class="card">
+      <ol class="steps" id="steps"></ol>
+      <p class="note" id="contact"></p>
+      <a class="btn call" id="call"></a>
+      <a class="btn primary" id="attend" hidden>출석 체크하러 가기</a>
+    </div>
+  </section>
+
+  <footer>JB전북은행 인사지원부 인재개발팀 · 전주대학교 평생학습지원센터</footer>
+</div>
+
+<script>
+/* ===================== 설정 ===================== */
+const CONFIG = {
+  PLACE: "전주대학교",
+  BUILDING: "자유관",
+  ROOM: "205호",
+  ADDRESS: "전북특별자치도 전주시 완산구 천잠로 303",
+  LAT: 35.8131, LNG: 127.0896,                 // 목적지 좌표 (건물 위치로 바꾸면 더 정확)
+  STEPS: [
+    "신정문으로 들어와 언덕길을 따라 직진",
+    "두 번째 오른쪽 길(자유관·공학관 사이)로 들어서면 자유관(경영대학)",
+    "자유관 2층 205호 입장 (14:00 시작, 13:50까지 도착 권장)"
+  ],
+  CONTACT_NAME: "인재개발팀 조은지 과장",
+  CONTACT_TEL: "010-3749-1379",
+  ATTEND_URL: "https://script.google.com/macros/s/AKfycbxmb9g24oxXLP0Fttg79gyOLtpsGQ2MMHGf0sg-lpoW51oXPPGyOoBSL0VlhBeGhJIaVQ/exec"                               // 출석 페이지 주소(있으면 버튼 표시)
+};
+/* ================================================= */
+const $=id=>document.getElementById(id);
+const destName = CONFIG.PLACE + (CONFIG.BUILDING && !CONFIG.BUILDING.startsWith("[") ? " " + CONFIG.BUILDING : "");
+$("room").textContent = (CONFIG.BUILDING.startsWith("[") ? "" : CONFIG.BUILDING + " ") + CONFIG.ROOM;
+$("addr").textContent = CONFIG.PLACE + " · " + CONFIG.ADDRESS;
+$("steps").innerHTML = CONFIG.STEPS.map(s=>`<li>${s}</li>`).join("");
+$("contact").innerHTML = `길을 못 찾으면 ${CONFIG.CONTACT_NAME}에게 연락 주세요`;
+$("call").href = "tel:" + CONFIG.CONTACT_TEL.replace(/-/g,""); $("call").textContent = "📞 " + CONFIG.CONTACT_NAME + " " + CONFIG.CONTACT_TEL;
+if (CONFIG.ATTEND_URL){ $("attend").href = CONFIG.ATTEND_URL; $("attend").hidden = false; }
+
+// 지도
+let map = null;
+try {
+  map = L.map("map",{scrollWheelZoom:false}).setView([CONFIG.LAT, CONFIG.LNG], 16);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
+  L.marker([CONFIG.LAT, CONFIG.LNG]).addTo(map).bindPopup(`<b>${destName}</b><br>${CONFIG.ROOM}`).openPopup();
+} catch(e) { $("map").hidden = true; }
+
+function setLinks(me){
+  const n = encodeURIComponent(destName), app = "jbbank.jjuai";
+  $("kakao").href = me
+    ? `https://map.kakao.com/link/from/${encodeURIComponent("내 위치")},${me.lat},${me.lng}/to/${n},${CONFIG.LAT},${CONFIG.LNG}`
+    : `https://map.kakao.com/link/to/${n},${CONFIG.LAT},${CONFIG.LNG}`;
+  $("naver").href = `nmap://route/car?${me?`slat=${me.lat}&slng=${me.lng}&sname=${encodeURIComponent("내 위치")}&`:""}dlat=${CONFIG.LAT}&dlng=${CONFIG.LNG}&dname=${n}&appname=${app}`;
+  $("tmap").href = `tmap://route?goalname=${n}&goalx=${CONFIG.LNG}&goaly=${CONFIG.LAT}`;
+}
+setLinks(null);
+
+// 앱이 없을 때 대비: 1.5초 안에 앱으로 안 넘어가면 웹/안내로 전환
+function appFallback(id, fallback){
+  $(id).addEventListener("click", () => {
+    const t = setTimeout(() => { if (!document.hidden) fallback(); }, 1500);
+    document.addEventListener("visibilitychange", () => clearTimeout(t), {once:true});
+  });
+}
+appFallback("naver", () => { location.href = "https://map.naver.com/p/search/" + encodeURIComponent(destName); });
+appFallback("tmap", () => { $("msg").textContent = "T맵 앱이 설치되어 있지 않은 것 같습니다. 카카오맵이나 네이버지도를 이용해 주세요."; });
+
+function km(a,b){const R=6371,t=x=>x*Math.PI/180,dLat=t(b.lat-a.lat),dLng=t(b.lng-a.lng);
+  const h=Math.sin(dLat/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dLng/2)**2; return 2*R*Math.asin(Math.sqrt(h));}
+
+$("agreeBtn").onclick = () => {
+  if (!navigator.geolocation){ $("msg").textContent = "이 휴대폰에서는 위치 확인이 안 됩니다. 아래 지도 앱 버튼을 눌러 주세요."; return; }
+  $("agreeBtn").disabled = true; $("agreeBtn").textContent = "위치 확인 중…";
+  $("msg").textContent = "휴대폰에서 위치 권한을 묻는 창이 뜨면 ‘허용’을 눌러 주세요.";
+  navigator.geolocation.getCurrentPosition(p => {
+    const me = {lat:+p.coords.latitude.toFixed(6), lng:+p.coords.longitude.toFixed(6)};
+    $("consentBox").hidden = true;
+    if (map){
+      L.circleMarker([me.lat,me.lng],{radius:8,color:"#fff",weight:3,fillColor:"#1E5AA8",fillOpacity:1}).addTo(map).bindPopup("내 위치");
+      map.fitBounds(L.latLngBounds([[me.lat,me.lng],[CONFIG.LAT,CONFIG.LNG]]),{padding:[30,30]});
+    }
+    const d = km(me,{lat:CONFIG.LAT,lng:CONFIG.LNG});
+    $("dist").textContent = d < 1 ? Math.round(d*1000)+"m" : d.toFixed(1)+"km";
+    $("eta").textContent = "약 " + Math.max(1, Math.round(d*1.4/30*60)) + "분";
+    $("stat").hidden = false;
+    $("msg").textContent = "아래 지도 앱 버튼을 누르면 내 위치에서 바로 길안내가 시작됩니다.";
+    setLinks(me);
+  }, () => {
+    $("agreeBtn").disabled = false; $("agreeBtn").textContent = "동의하고 내 위치 확인하기";
+    $("msg").textContent = "위치를 가져오지 못했습니다. 아래 지도 앱 버튼을 누르면 앱에서 현재 위치로 길안내를 받을 수 있습니다.";
+  }, {enableHighAccuracy:true, timeout:10000, maximumAge:60000});
+};
+$("skipBtn").onclick = () => { $("consentBox").hidden = true; $("msg").textContent = "지도 앱 버튼을 누르면 앱에서 길안내가 시작됩니다."; };
+</script>
+</body>
+</html>
