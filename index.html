@@ -48,6 +48,8 @@ h2{font-size:18px;margin:0 0 10px}
 .steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:24px;height:24px;border-radius:50%;background:var(--soft);color:var(--blue);font-weight:700;font-size:13px;display:grid;place-items:center}
 .note{font-size:13.5px;color:var(--muted);margin:4px 0 8px}
 .btn.call{background:var(--soft);color:var(--blue);margin-bottom:10px}
+.attnote{margin:6px 0 10px;padding:10px 12px;border-radius:10px;background:var(--soft);font-size:15px;text-align:center}
+.attnote b{color:var(--blue)}
 footer{margin-top:30px;text-align:center;font-size:13px;color:var(--muted)}
 [hidden]{display:none!important}
 </style>
@@ -105,6 +107,7 @@ footer{margin-top:30px;text-align:center;font-size:13px;color:var(--muted)}
       <ol class="steps" id="steps"></ol>
       <p class="note" id="contact"></p>
       <a class="btn call" id="call"></a>
+      <p class="attnote">⏰ 출석체크는 <b>13시 40분부터</b> 가능합니다</p>
       <a class="btn primary" id="attend" hidden>출석 체크하러 가기</a>
     </div>
   </section>
@@ -123,7 +126,7 @@ const CONFIG = {
   STEPS: [
     "신정문으로 들어와 언덕길을 따라 직진",
     "두 번째 오른쪽 길(자유관·공학관 사이)로 들어서면 자유관(경영대학)",
-    "자유관 2층 205호 입장 (14:00 시작, 13:50까지 도착 권장)"
+    "자유관 2층 205호 입장 (출석체크 13:40부터, 연수 14:00 시작)"
   ],
   CONTACT_NAME: "인재개발팀 조은지 과장",
   CONTACT_TEL: "010-3749-1379",
